@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subsidiekaart Noord-Holland: verduurzamen per gemeente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --ink:#111827; --ink-2:#374151; --muted:#6b7280; --line:#e5e7eb; --line-2:#d1d5db;
+  --accent:#0f5f57; --accent-soft:#e6f2f0;
+  --b0:#e7ecef; --b1:#d5ebe7; --b2:#a3d3cb; --b3:#5fb1a5; --b4:#23877b; --b5:#0d5a52;
+  --warn-bg:#fff4e5; --warn:#9a5b13; --closed:#eef0f3;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,sans-serif;font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+header.top{padding:36px 0 20px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+h1{font-size:clamp(26px,3.2vw,36px);line-height:1.15;letter-spacing:-.02em;font-weight:800;margin:10px 0 8px}
+.lede{color:var(--ink-2);max-width:760px;margin:0;font-size:15.5px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0 22px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.kpi .v{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.kpi .k{font-size:12.5px;color:var(--muted);margin-top:4px}
+.grid{display:grid;grid-template-columns:minmax(360px,520px) 1fr;gap:18px;align-items:start;padding-bottom:22px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+.mapcard{padding:16px;position:sticky;top:14px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:3px}
+.seg button{border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);padding:6px 10px;border-radius:7px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.search{position:relative;flex:1;min-width:150px}
+.search input{width:100%;font:inherit;font-size:13px;padding:7px 10px 7px 30px;border:1px solid var(--line-2);border-radius:9px;background:var(--surface);color:var(--ink)}
+.search input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+.search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--muted)}
+svg.map{width:100%;height:auto;display:block}
+.mapwrap{position:relative}
+svg.map{max-height:calc(100vh - 210px);min-height:420px}
+.gm{cursor:pointer;stroke:#fff;stroke-width:.9;stroke-linejoin:round;transition:filter .12s,opacity .12s}
+.gm:hover{filter:brightness(.93)}
+.gm.dim{opacity:.18}
+.gm:focus{outline:none}
+.gm:focus-visible{stroke:var(--accent);stroke-width:2.5}
+#selOutline{fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linejoin:round;pointer-events:none}
+.lbl{pointer-events:none;font-family:Inter,sans-serif;font-size:12.5px;font-weight:600;text-anchor:middle;paint-order:stroke;stroke-width:3px;stroke-linejoin:round}
+.lbl .a{font-size:13px;font-weight:800}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:12.5px;line-height:1.35;padding:7px 10px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);white-space:nowrap;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .08s}
+.tip b{display:block;font-size:13px}
+.tip.on{opacity:1}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.06)}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+.panel{padding:20px 22px;min-height:520px}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:14px}
+.ph h2{margin:0;font-size:24px;letter-spacing:-.02em;font-weight:800}
+.ph .sub{color:var(--muted);font-size:13px;margin-top:2px}
+.big{text-align:right}
+.big .v{font-size:28px;font-weight:800;color:var(--accent);letter-spacing:-.02em;line-height:1}
+.big .k{font-size:11.5px;color:var(--muted);margin-top:4px;max-width:180px}
+.back{border:0;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent);cursor:pointer;padding:0;margin-bottom:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:500;color:var(--ink-2);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.list{display:grid;gap:10px}
+.item{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--surface)}
+.item.gesloten{background:#fafafa}
+.item h3{margin:0 0 8px;font-size:15px;line-height:1.35;font-weight:700}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--bg);color:var(--ink-2)}
+.tag.d{background:var(--accent-soft);color:var(--accent)}
+.tag.w{background:var(--warn-bg);color:var(--warn)}
+.tag.x{background:#f3f4f6;color:#6b7280;text-decoration:line-through}
+dl{display:grid;grid-template-columns:96px 1fr;gap:4px 12px;margin:0;font-size:13.5px}
+dt{color:var(--muted)}
+dd{margin:0;color:var(--ink-2)}
+dd.amt{color:var(--ink);font-weight:700}
+.src{display:inline-flex;align-items:center;gap:4px;margin-top:10px;font-size:12.5px;font-weight:600;color:var(--accent);text-decoration:none}
+.src:hover{text-decoration:underline}
+.empty{padding:18px;border:1px dashed var(--line-2);border-radius:10px;color:var(--ink-2);font-size:14px}
+.rank{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.rank li button{width:100%;display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:10px;border:0;background:transparent;font:inherit;text-align:left;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.rank li button:hover{background:var(--bg)}
+.rank .n{font-size:12px;color:var(--muted);font-weight:600}
+.rank .bar{height:6px;border-radius:3px;background:var(--b3);margin-top:4px}
+.rank .val{font-weight:700;font-size:13.5px}
+.intro{color:var(--ink-2);font-size:14px;margin:0 0 14px}
+.section{padding:20px 22px;margin-bottom:18px}
+.section h3{margin:0 0 4px;font-size:16px}
+.section p{margin:0 0 12px;color:var(--ink-2);font-size:13.5px}
+.prov{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.prov .item h3{font-size:14px}
+.nat{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.nat div{background:var(--bg);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--ink-2)}
+.nat b{display:block;color:var(--ink);font-size:13.5px;margin-bottom:2px}
+footer{color:var(--muted);font-size:12px;padding:6px 0 36px;line-height:1.6}
+@media (max-width:900px){
+  .grid{grid-template-columns:1fr}
+  .mapcard{position:static}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .prov,.nat{grid-template-columns:1fr}
+}
+@media (max-width:480px){
+  .wrap{padding:0 16px}
+  dl{grid-template-columns:82px 1fr}
+  .ph{flex-direction:column}
+  .big{text-align:left}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow"><span class="dot"></span>Noord-Holland · stand 20 november 2026</div>
+    <h1>Subsidie voor verduurzamen, per gemeente</h1>
+    <p class="lede">Alle 44 gemeenten in Noord-Holland met hun geldende regelingen voor isolatie, warmtepompen, groene daken en meer. De kleur toont het hoogste bedrag dat een woningeigenaar voor isolatie kan krijgen.</p>
+  </header>
+
+  <section class="kpis" id="kpis" aria-label="Kerncijfers"></section>
+
+  <div class="grid">
+    <section class="card mapcard" aria-label="Kaart">
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Kleur op basis van">
+          <button data-m="max" aria-pressed="true">Hoogste bedrag</button>
+          <button data-m="basis" aria-pressed="false">Zonder inkomenseis</button>
+        </div>
+        <label class="search">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg>
+          <input id="q" type="search" placeholder="Zoek gemeente" autocomplete="off" aria-label="Zoek gemeente">
+        </label>
+      </div>
+      <div class="mapwrap"><svg class="map" id="map" role="group" aria-label="Kaart van de gemeenten in Noord-Holland"></svg><div class="tip" id="tip"></div></div>
+      <div class="legend" id="legend"></div>
+      <div class="note">Gemeentegrenzen 2026: CBS en Kadaster, via PDOK. Beweeg over een gemeente voor het bedrag, klik voor alle regelingen.</div>
+    </section>
+
+    <section class="card panel" id="panel" aria-live="polite"></section>
+  </div>
+
+  <section class="card section">
+    <h3>Provincie Noord-Holland</h3>
+    <p>Provinciale regelingen voor organisaties, geldig in alle gemeenten.</p>
+    <div class="prov" id="prov"></div>
+  </section>
+
+  <section class="card section">
+    <h3>Landelijk, voor iedereen</h3>
+    <p>Gemeentelijke subsidie is vaak te combineren met deze landelijke regelingen.</p>
+    <div class="nat">
+      <div><b>ISDE</b>Subsidie voor isolatie, warmtepompen, zonneboilers en ventilatie. Aanvragen bij RVO.</div>
+      <div><b>SVVE</b>Aparte landelijke regeling voor verenigingen van eigenaars.</div>
+      <div><b>Warmtefonds</b>Lening voor het verduurzamen van je woning.</div>
+    </div>
+  </section>
+
+  <footer>
+    <strong>Bron en werkwijze.</strong> Regelingen uit de Centrale Voorziening Decentrale Regelgeving (lokaleregelgeving.overheid.nl) en gemeentebladen, geraadpleegd op 20 november 2026. Gemeentegrenzen: CBS/Kadaster (PDOK), vereenvoudigd. Selectie: regelingen over isolatie, energie, warmte en groen voor woningen, VvE’s en ondernemers. Bedragen zijn maxima volgens de regeltekst; voorwaarden verschillen per regeling. Of er nog budget is, staat niet op deze kaart. Voor Hoorn is de regeling niet in het register gevonden; het bedrag komt uit een nieuwsbericht. Voor Laren en Wijdemeren is geen gemeentelijke regeling gevonden. Controleer altijd de actuele voorwaarden bij de gemeente.
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script src="geo.js"></script>
+<script>
+(function(){
+const fmt = n => '€ ' + n.toLocaleString('nl-NL');
+const short = n => n>=1000 ? '€ ' + (n/1000).toLocaleString('nl-NL',{maximumFractionDigits:1}) + 'k' : '€ ' + n;
+const BINS = [
+  {max:1499, c:'var(--b1)', t:'#0d3b36', l:'tot € 1.500'},
+  {max:2499, c:'var(--b2)', t:'#0d3b36', l:'€ 1.500 – 2.499'},
+  {max:3999, c:'var(--b3)', t:'#ffffff', l:'€ 2.500 – 3.999'},
+  {max:6999, c:'var(--b4)', t:'#ffffff', l:'€ 4.000 – 6.999'},
+  {max:Infinity, c:'var(--b5)', t:'#ffffff', l:'€ 7.000 of meer'}
+];
+let metric = 'max', current = null, filter = 'Alle';
+const byId = Object.fromEntries(GEMEENTEN.map(g=>[g.id,g]));
+const binFor = v => BINS.find(b=>v<=b.max);
+
+// KPIs
+const allReg = GEMEENTEN.flatMap(g=>g.reg);
+const withIso = GEMEENTEN.filter(g=>g.reg.some(r=>r.th.includes('Isolatie') && (r.d.includes('Woningeigenaren')||r.d.includes('VvE')) && !r.gesloten)).length;
+const ending = allReg.filter(r=>r.eind).length;
+const top = GEMEENTEN.filter(g=>g.max!=null).reduce((a,b)=>b.max>a.max?b:a);
+const lowInc = GEMEENTEN.filter(g=>g.reg.some(r=>r.d.includes('Lage inkomens') && !r.gesloten)).length;
+document.getElementById('kpis').innerHTML = [
+  [allReg.length, 'geldende regelingen in 44 gemeenten'],
+  [withIso, 'gemeenten met een lopende isolatieregeling voor woningeigenaren'],
+  [lowInc, 'gemeenten met een extra route voor lage inkomens'],
+  [ending, 'regelingen die eind 2026 aflopen']
+].map(([v,k])=>`<div class="kpi"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
+
+// Map
+const svg = document.getElementById('map');
+svg.setAttribute('viewBox', `-6 -6 ${MAP_W+12} ${MAP_H+12}`);
+const NS = 'http://www.w3.org/2000/svg';
+const mk = (t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e;};
+const defs = mk('defs',{});
+const pat = mk('pattern',{id:'stripes',width:6,height:6,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'},defs);
+mk('rect',{width:6,height:6,fill:'#eef0f3'},pat); mk('line',{x1:0,y1:0,x2:0,y2:6,stroke:'#cfd4db','stroke-width':3},pat);
+const gShapes = mk('g',{}), gSel = mk('g',{}), gLbl = mk('g',{});
+const selOutline = mk('path',{id:'selOutline','fill-rule':'evenodd'},gSel);
+const tip = document.getElementById('tip'), wrap = svg.parentNode;
+const LABEL_MIN = 6700; // alleen grotere gemeenten krijgen een label
+const LBL_OFF = {haarlemmermeer:[0,8],amsterdam:[-8,4],zaanstad:[0,-4],hollandskroon:[-6,8],medemblik:[0,-6],dijkenwaard:[0,-2]};
+const shapes = {};
+GEMEENTEN.forEach(g=>{
+  const p = mk('path',{class:'gm',d:GEO[g.id],'fill-rule':'evenodd',tabindex:0,role:'button','data-id':g.id},gShapes);
+  p.addEventListener('click',()=>select(g.id));
+  p.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(g.id);}});
+  p.addEventListener('mousemove',e=>showTip(g,e));
+  p.addEventListener('mouseleave',()=>tip.classList.remove('on'));
+  const [cx,cy,area] = CENT[g.id];
+  let lbl=null;
+  if(area>=LABEL_MIN){
+    const [dx,dy] = LBL_OFF[g.id]||[0,0];
+    lbl = mk('text',{class:'lbl',x:cx+dx,y:cy+dy},gLbl);
+    const t1 = mk('tspan',{x:cx+dx,dy:-2},lbl); t1.textContent = g.naam;
+    const t2 = mk('tspan',{class:'a',x:cx+dx,dy:14},lbl);
+    lbl._a = t2;
+  }
+  shapes[g.id] = {p,lbl};
+});
+function tipText(g){
+  const v = g[metric];
+  return `<b>${g.naam}</b>${g.closed?'aanvraagtermijn verstreken':(v==null?(g.reg.length?'bedrag niet vastgelegd':'geen gemeentelijke regeling'):(metric==='max'?'tot ':'zonder inkomenseis tot ')+fmt(v))} · ${g.reg.length} ${g.reg.length===1?'regeling':'regelingen'}`;
+}
+function showTip(g,e){
+  const r = wrap.getBoundingClientRect();
+  tip.innerHTML = tipText(g);
+  tip.style.left = Math.min(Math.max(e.clientX-r.left,90),r.width-90)+'px';
+  tip.style.top = (e.clientY-r.top)+'px';
+  tip.classList.add('on');
+}
+
+function paint(){
+  GEMEENTEN.forEach(g=>{
+    const t = shapes[g.id], v = g[metric];
+    let fill, txt, halo, label;
+    if(g.closed){ fill='url(#stripes)'; txt='#4b5563'; halo='#eef0f3'; label='gesloten'; }
+    else if(v==null){ fill='var(--b0)'; txt='#6b7280'; halo='#eceff3'; label= g.reg.length? 'zie lijst' : 'geen'; }
+    else { const b=binFor(v); fill=b.c; txt=b.t; halo=b.c; label=short(v); }
+    t.p.setAttribute('fill',fill);
+    t.p.setAttribute('aria-label', `${g.naam}: ${g.closed?'aanvraagtermijn verstreken':(v==null?'geen bedrag bekend':fmt(v))}, ${g.reg.length} regeling(en)`);
+    if(t.lbl){ t.lbl.setAttribute('fill',txt); t.lbl.setAttribute('stroke',halo); t.lbl._a.textContent=label; }
+  });
+  selOutline.setAttribute('d', current? GEO[current] : '');
+  const L = BINS.map(b=>`<span><i style="background:${b.c}"></i>${b.l}</span>`).join('') +
+    `<span><i style="background:var(--b0)"></i>geen bedrag / geen regeling</span><span><i style="background:repeating-linear-gradient(45deg,#eef0f3 0 3px,#d4d8de 3px 5px)"></i>aanvraagtermijn verstreken</span>`;
+  document.getElementById('legend').innerHTML = L;
+}
+
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+  metric=b.dataset.m; document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b)); paint(); if(!current) renderOverview();
+}));
+document.getElementById('q').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  GEMEENTEN.forEach(g=>shapes[g.id].p.classList.toggle('dim', !!q && !g.naam.toLowerCase().includes(q)));
+  const hits = GEMEENTEN.filter(g=>g.naam.toLowerCase().startsWith(q));
+  if(q && hits.length===1) select(hits[0].id);
+});
+
+const panel = document.getElementById('panel');
+function renderOverview(){
+  const ranked = GEMEENTEN.filter(g=>g[metric]!=null && !g.closed).sort((a,b)=>b[metric]-a[metric]).slice(0,12);
+  const maxV = ranked[0][metric];
+  panel.innerHTML = `<div class="ph"><div><h2>Waar krijg je het meest?</h2><div class="sub">${metric==='max'?'Hoogste isolatiebedrag, inclusief routes voor lage inkomens':'Hoogste isolatiebedrag zonder inkomenseis'}</div></div></div>
+  <p class="intro">Klik op een gemeente op de kaart of in de lijst voor alle regelingen, voorwaarden en links naar de officiële tekst.</p>
+  <ol class="rank">${ranked.map((g,i)=>`<li><button data-id="${g.id}"><span class="n">${i+1}</span><span>${g.naam}<div class="bar" style="width:${Math.max(6,g[metric]/maxV*100)}%"></div></span><span class="val">${fmt(g[metric])}</span></button></li>`).join('')}</ol>`;
+  panel.querySelectorAll('.rank button').forEach(b=>b.addEventListener('click',()=>select(b.dataset.id)));
+}
+
+const GROUPS = ['Alle','Woningeigenaren','Lage inkomens','VvE','Huurders','Ondernemers','Collectief','Corporaties'];
+function renderGemeente(){
+  const g = byId[current];
+  const avail = GROUPS.filter(x=>x==='Alle' || g.reg.some(r=>r.d.includes(x)));
+  if(!avail.includes(filter)) filter='Alle';
+  const items = g.reg.filter(r=>filter==='Alle' || r.d.includes(filter));
+  const v = g[metric];
+  const bigV = g.closed ? 'Gesloten' : (v==null ? '–' : fmt(v));
+  const bigK = g.closed ? 'aanvraagtermijn isolatiesubsidie verstreken' : (v==null ? (g.reg.length?'bedrag staat niet vast in de regeltekst':'geen gemeentelijke regeling gevonden') : (metric==='max'?'hoogste isolatiebedrag voor woningeigenaren':'hoogste isolatiebedrag zonder inkomenseis'));
+  panel.innerHTML = `<button class="back" id="back">← Overzicht</button>
+  <div class="ph"><div><h2>${g.naam}</h2><div class="sub">${g.reg.length} ${g.reg.length===1?'regeling':'regelingen'}</div></div>
+  <div class="big"><div class="v">${bigV}</div><div class="k">${bigK}</div></div></div>
+  ${g.reg.length? `<div class="chips">${avail.map(x=>`<button class="chip" aria-pressed="${x===filter}" data-f="${x}">${x}</button>`).join('')}</div>`:''}
+  <div class="list">${ g.reg.length===0 ? `<div class="empty">Geen gemeentelijke regeling voor verduurzaming gevonden in het register. Woningeigenaren kunnen wel gebruikmaken van de landelijke ISDE, SVVE en het Warmtefonds (zie onder).</div>` :
+    items.map(r=>`<article class="item ${r.gesloten?'gesloten':''}">
+      <div class="tags">${r.d.map(x=>`<span class="tag d">${x}</span>`).join('')}${r.th.map(x=>`<span class="tag">${x}</span>`).join('')}${r.gesloten?'<span class="tag w">aanvragen gesloten</span>':(r.eind?'<span class="tag w">loopt af eind 2026</span>':'')}${r.bron==='nieuws'?'<span class="tag">bron: nieuwsbericht</span>':''}</div>
+      <h3>${r.t}</h3>
+      <dl><dt>Voor wie</dt><dd>${r.wie}</dd><dt>Bedrag</dt><dd class="amt">${r.b}</dd><dt>Looptijd</dt><dd>${r.l}</dd></dl>
+      <a class="src" href="${r.u}" target="_blank" rel="noopener">${r.bron==='nieuws'?'Lees het bericht':'Officiële regeling'} ↗</a>
+    </article>`).join('') }</div>`;
+  document.getElementById('back').onclick = ()=>{current=null; try{history.replaceState(null,'',location.pathname)}catch(e){} paint(); renderOverview();};
+  panel.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{filter=c.dataset.f; renderGemeente();}));
+}
+function select(id){ tip.classList.remove('on'); current=id; filter='Alle'; try{history.replaceState(null,'','#'+id)}catch(e){} paint(); renderGemeente(); if(window.innerWidth<900) panel.scrollIntoView({behavior:'smooth',block:'start'}); }
+
+document.getElementById('prov').innerHTML = PROVINCIE.map(p=>`<article class="item"><h3>${p.t}</h3><dl><dt>Voor wie</dt><dd>${p.wie}</dd>${p.b?`<dt>Bedrag</dt><dd class="amt">${p.b}</dd>`:''}<dt>Looptijd</dt><dd>${p.l}</dd></dl><a class="src" href="${p.u}" target="_blank" rel="noopener">Officiële regeling ↗</a></article>`).join('');
+
+paint();
+const h = (location.hash||'').slice(1);
+if(byId[h]) select(h); else renderOverview();
+window.addEventListener('hashchange',()=>{const k=location.hash.slice(1); if(byId[k]&&k!==current) select(k);});
+})();
+</script>
+</body>
+</html>
